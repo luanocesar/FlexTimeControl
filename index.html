@@ -1,44 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <title>Saída do Trabalho</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ponto Flex</title>
+    <link rel="manifest" href='data:application/json,{"name":"Ponto Flex","short_name":"Ponto","start_url":"/","display":"standalone","background_color":"#ffffff"}'>
     <style>
-        body { font-family: sans-serif; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-        input { font-size: 1.2rem; padding: 10px; }
-        button { padding: 15px; font-size: 1rem; background: #007bff; color: white; border: none; border-radius: 5px; }
+        body { font-family: sans-serif; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        input { font-size: 1.5rem; padding: 10px; width: 100%; box-sizing: border-box; }
+        .result { font-size: 1.2rem; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <label>Entrada:</label>
+    <label>Horário de Entrada:</label>
     <input type="time" id="entrada">
     
-    <div>Saída: <span id="saida">-</span></div>
-    <div>Limite: <span id="limite">-</span></div>
-    
-    <button onclick="salvar()">Salvar e Ativar Alerta</button>
+    <div class="result">Saída: <span id="saida">-</span></div>
+    <div class="result">Limite: <span id="limite">-</span></div>
 
     <script>
-        function salvar() {
-            const entrada = document.getElementById('entrada').value;
-            localStorage.setItem('entrada', entrada);
-            
-            // Solicita permissão de notificação
+        const input = document.getElementById('entrada');
+        
+        // Carrega salvo
+        input.value = localStorage.getItem('entrada') || "";
+        calcular();
+
+        // Calcula ao mudar
+        input.addEventListener('change', () => {
+            localStorage.setItem('entrada', input.value);
+            calcular();
             Notification.requestPermission();
+        });
+
+        function calcular() {
+            if(!input.value) return;
+            const [h, m] = input.value.split(':').map(Number);
             
-            const [h, m] = entrada.split(':').map(Number);
-            const date = new Date();
-            date.setHours(h + 8, m + 48); // Exemplo: 8h48min de jornada
+            const saida = new Date(); saida.setHours(h + 9, m); // 9h de jornada
+            const limite = new Date(); limite.setHours(h + 10, m); // 10h limite
             
-            alert("Horário salvo! O sistema te avisará.");
+            document.getElementById('saida').innerText = saida.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            document.getElementById('limite').innerText = limite.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
             
-            // Lógica simples de verificação
-            setInterval(() => {
-                const agora = new Date();
-                if (agora.getHours() === date.getHours() && agora.getMinutes() === date.getMinutes()) {
-                    new Notification("Hora de vazar!", { body: "Bate o ponto e vai!" });
-                }
-            }, 60000);
+            // Agenda alerta
+            const agora = new Date();
+            const tempoAteSaida = saida.getTime() - agora.getTime();
+            if(tempoAteSaida > 0) {
+                setTimeout(() => {
+                    new Notification("Hora de vazar!", { body: "Sua jornada de trabalho terminou." });
+                }, tempoAteSaida);
+            }
         }
     </script>
 </body>
