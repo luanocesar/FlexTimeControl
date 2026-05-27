@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Saída do Trabalho</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        input { font-size: 1.2rem; padding: 10px; }
+        button { padding: 15px; font-size: 1rem; background: #007bff; color: white; border: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <label>Entrada:</label>
+    <input type="time" id="entrada">
+    
+    <div>Saída: <span id="saida">-</span></div>
+    <div>Limite: <span id="limite">-</span></div>
+    
+    <button onclick="salvar()">Salvar e Ativar Alerta</button>
+
+    <script>
+        function salvar() {
+            const entrada = document.getElementById('entrada').value;
+            localStorage.setItem('entrada', entrada);
+            
+            // Solicita permissão de notificação
+            Notification.requestPermission();
+            
+            const [h, m] = entrada.split(':').map(Number);
+            const date = new Date();
+            date.setHours(h + 8, m + 48); // Exemplo: 8h48min de jornada
+            
+            alert("Horário salvo! O sistema te avisará.");
+            
+            // Lógica simples de verificação
+            setInterval(() => {
+                const agora = new Date();
+                if (agora.getHours() === date.getHours() && agora.getMinutes() === date.getMinutes()) {
+                    new Notification("Hora de vazar!", { body: "Bate o ponto e vai!" });
+                }
+            }, 60000);
+        }
+    </script>
+</body>
+</html>
