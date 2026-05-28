@@ -94,27 +94,36 @@
             </div>
         </div>
 
-        <div class="flex-1"></div>
-
-        <!-- Ações -->
+        <div class="flex-1"></div>        <!-- Ações -->
         <div class="flex flex-col gap-3">
             <a 
-                id="btnAgenda" 
+                id="btnAlarme" 
                 href="#"
-                target="_blank"
-                class="w-full bg-sky-500 hover:bg-sky-400 active:bg-sky-650 text-slate-900 font-black text-lg py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-sky-500/20 opacity-30 cursor-not-allowed pointer-events-none"
+                class="w-full bg-sky-500 hover:bg-sky-400 active:bg-sky-655 text-slate-900 font-black text-lg py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-sky-500/20 opacity-30 cursor-not-allowed pointer-events-none"
             >
-                <i data-lucide="calendar-plus" class="w-6 h-6"></i>
-                Adicionar Lembrete na Agenda
+                <i data-lucide="bell-ring" class="w-6 h-6"></i>
+                Definir Alarme no Relógio
             </a>
             
-            <button 
-                id="btnCopiar" 
-                class="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-850 border border-slate-700/60 text-slate-100 font-bold text-base py-4 rounded-2xl flex items-center justify-center gap-2 transition-all opacity-30 cursor-not-allowed pointer-events-none"
-            >
-                <i data-lucide="copy" class="w-5 h-5 text-slate-400"></i>
-                Copiar Saída Ideal
-            </button>
+            <div class="grid grid-cols-2 gap-3">
+                <a 
+                    id="btnAgenda" 
+                    href="#"
+                    target="_blank"
+                    class="bg-slate-800 hover:bg-slate-700 active:bg-slate-850 border border-slate-700/60 text-slate-100 font-bold text-sm py-4 rounded-2xl flex items-center justify-center gap-2 transition-all opacity-30 cursor-not-allowed pointer-events-none"
+                >
+                    <i data-lucide="calendar" class="w-5 h-5 text-sky-400"></i>
+                    Salvar na Agenda
+                </a>
+                
+                <button 
+                    id="btnCopiar" 
+                    class="bg-slate-800 hover:bg-slate-700 active:bg-slate-850 border border-slate-700/60 text-slate-100 font-bold text-sm py-4 rounded-2xl flex items-center justify-center gap-2 transition-all opacity-30 cursor-not-allowed pointer-events-none"
+                >
+                    <i data-lucide="copy" class="w-5 h-5 text-slate-400"></i>
+                    Copiar Saída
+                </button>
+            </div>
         </div>
 
     </main>
@@ -138,6 +147,7 @@
         const spanLimite = document.getElementById('limite');
         const containerSaida = document.getElementById('containerSaida');
         const containerLimite = document.getElementById('containerLimite');
+        const btnAlarme = document.getElementById('btnAlarme');
         const btnAgenda = document.getElementById('btnAgenda');
         const btnCopiar = document.getElementById('btnCopiar');
         const toast = document.getElementById('toast');
@@ -207,6 +217,11 @@
             spanSaida.innerText = idealTimeStr;
             spanLimite.innerText = limitTimeStr;
 
+            // Gerar Link de Intent do Alarme para Android (Corrigido para maior compatibilidade)
+            const hora = dataSaida.getHours();
+            const minuto = dataSaida.getMinutes();
+            btnAlarme.href = `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${hora};i.android.intent.extra.alarm.MINUTES=${minuto};S.android.intent.extra.alarm.MESSAGE=Fim%20do%20Expediente;end;`;
+
             // Gerar URL do Google Calendar para Lembrete com Notificação
             const agora = new Date();
             const yyyy = agora.getFullYear();
@@ -227,6 +242,7 @@
             btnAgenda.href = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Fim+do+Expediente+%F0%9F%9A%AA&dates=${dataInicioStr}/${dataFimStr}&details=Hor%C3%A1rio+de+sa%C3%ADda+ideal+calculado+pelo+PontoFlex.+Entrada+registrada+%C3%A0s+${inputEntrada.value}.&sf=true&output=xml`;
 
             // Habilita os botões
+            btnAlarme.classList.remove('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
             btnAgenda.classList.remove('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
             btnCopiar.classList.remove('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
         }
