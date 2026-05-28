@@ -6,8 +6,8 @@
     <title>Ponto Flex</title>
     <meta name="theme-color" content="#0f172a">
     
-    <!-- PWA Manifest embutido para permitir instalação no Android -->
-    <link rel="manifest" href='data:application/json,{"name":"Ponto Flex","short_name":"Ponto","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzhiZGY4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiPjwvY2lyY2xlPjxwb2x5bGluZSBwb2ludHM9IjEyIDYgMTIgMTIgMTYgMTQiPjwvcG9seWxpbmU+PC9zdmc+","sizes":"192x192","type":"image/svg+xml"}]}'>
+    <!-- Link para o arquivo manifest externo -->
+    <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -35,10 +35,6 @@
             <i data-lucide="clock" class="w-8 h-8 text-sky-400"></i>
             <h1 class="text-3xl font-light tracking-wide text-white">Ponto<span class="font-bold text-sky-400">Flex</span></h1>
         </div>
-        <!-- Botão que aparece quando o PWA pode ser instalado -->
-        <button id="btnInstalar" class="hidden bg-slate-800 hover:bg-slate-700 p-3 rounded-full transition text-sky-400">
-            <i data-lucide="download" class="w-6 h-6"></i>
-        </button>
     </header>
 
     <!-- Main Content -->
@@ -61,7 +57,6 @@
 
         <!-- Resultados -->
         <div class="flex flex-col gap-4">
-            <!-- Saída -->
             <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-6 flex items-center justify-between">
                 <div class="flex items-center gap-3 text-emerald-400">
                     <i data-lucide="log-out" class="w-8 h-8"></i>
@@ -70,7 +65,6 @@
                 <div id="saida" class="text-5xl font-black text-emerald-400">--:--</div>
             </div>
             
-            <!-- Limite -->
             <div class="bg-rose-500/10 border border-rose-500/20 rounded-3xl p-6 flex items-center justify-between">
                 <div class="flex items-center gap-3 text-rose-400">
                     <i data-lucide="alert-octagon" class="w-8 h-8"></i>
@@ -82,47 +76,30 @@
 
         <div class="flex-1"></div>
 
-        <!-- Botão Alarme (Usa Intent para abrir o Relógio do Android) -->
-        <button 
+        <!-- Botão Alarme transformado em Tag A para funcionar a Intent -->
+        <a 
             id="btnAlarme" 
-            onclick="configurarAlarmeNativo()"
-            class="w-full bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-slate-900 font-black text-xl py-6 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-sky-500/20 disabled:opacity-30 disabled:cursor-not-allowed"
-            disabled
+            href="#"
+            class="w-full bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-slate-900 font-black text-xl py-6 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-sky-500/20 opacity-30 cursor-not-allowed pointer-events-none"
         >
             <i data-lucide="bell-ring" class="w-7 h-7"></i>
             Ativar Alarme no Celular
-        </button>
+        </a>
 
     </main>
 
     <script>
         lucide.createIcons();
 
+        // Registra o Service Worker para habilitar a instalação do PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
         const inputEntrada = document.getElementById('entrada');
         const spanSaida = document.getElementById('saida');
         const spanLimite = document.getElementById('limite');
         const btnAlarme = document.getElementById('btnAlarme');
-        const btnInstalar = document.getElementById('btnInstalar');
-
-        let horaSaidaMilitar = null;
-        let minutoSaidaMilitar = null;
-        let deferredPrompt;
-
-        // Lógica de Instalação (PWA)
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            btnInstalar.classList.remove('hidden');
-        });
-
-        btnInstalar.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') btnInstalar.classList.add('hidden');
-                deferredPrompt = null;
-            }
-        });
 
         const salvo = localStorage.getItem('entrada');
         if (salvo) {
@@ -142,32 +119,27 @@
 
             const [h, m] = inputEntrada.value.split(':').map(Number);
             
-            // Lógica: 8h48m + 1h de almoço = +9 horas e 48 minutos
             const dataSaida = new Date();
             dataSaida.setHours(h + 9, m + 48);
             
-            // Limite: Saída + 42 minutos
             const dataLimite = new Date(dataSaida.getTime());
             dataLimite.setMinutes(dataLimite.getMinutes() + 42);
 
             spanSaida.innerText = formatarHora(dataSaida);
             spanLimite.innerText = formatarHora(dataLimite);
 
-            horaSaidaMilitar = dataSaida.getHours();
-            minutoSaidaMilitar = dataSaida.getMinutes();
+            const hora = dataSaida.getHours();
+            const minuto = dataSaida.getMinutes();
 
-            btnAlarme.disabled = false;
+            // Atualiza a URL do botão com a Intent do Android
+            btnAlarme.href = `intent://#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${hora};i.android.intent.extra.alarm.MINUTES=${minuto};S.android.intent.extra.alarm.MESSAGE=Fim%20do%20Expediente;end`;
+            
+            // Habilita o botão
+            btnAlarme.classList.remove('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
         }
 
         function formatarHora(date) {
             return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        // Configura o alarme nativo via Intent do Android
-        function configurarAlarmeNativo() {
-            if (horaSaidaMilitar === null || minutoSaidaMilitar === null) return;
-            const intentUrl = `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${horaSaidaMilitar};i.android.intent.extra.alarm.MINUTES=${minutoSaidaMilitar};S.android.intent.extra.alarm.MESSAGE=Fim%20do%20Expediente;end`;
-            window.location.href = intentUrl;
         }
     </script>
 </body>
