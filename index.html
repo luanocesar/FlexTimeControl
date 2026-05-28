@@ -57,36 +57,73 @@
 
         <!-- Resultados -->
         <div class="flex flex-col gap-4">
-            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-6 flex items-center justify-between">
+            <div 
+                id="containerSaida"
+                class="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-6 flex items-center justify-between cursor-pointer hover:bg-emerald-500/15 active:scale-[0.99] transition-all duration-200 group"
+                title="Clique para copiar"
+            >
                 <div class="flex items-center gap-3 text-emerald-400">
                     <i data-lucide="log-out" class="w-8 h-8"></i>
-                    <span class="text-lg font-semibold uppercase tracking-wider">Saída Ideal</span>
+                    <div>
+                        <span class="text-sm font-semibold uppercase tracking-wider block opacity-75">Saída Ideal</span>
+                        <span class="text-[10px] text-emerald-500/70 font-medium">Toque para copiar</span>
+                    </div>
                 </div>
-                <div id="saida" class="text-5xl font-black text-emerald-400">--:--</div>
+                <div class="flex items-center gap-3">
+                    <div id="saida" class="text-5xl font-black text-emerald-400">--:--</div>
+                    <i data-lucide="copy" class="w-5 h-5 text-emerald-500/30 group-hover:text-emerald-400 transition-colors"></i>
+                </div>
             </div>
             
-            <div class="bg-rose-500/10 border border-rose-500/20 rounded-3xl p-6 flex items-center justify-between">
+            <div 
+                id="containerLimite"
+                class="bg-rose-500/10 border border-rose-500/20 rounded-3xl p-6 flex items-center justify-between cursor-pointer hover:bg-rose-500/15 active:scale-[0.99] transition-all duration-200 group"
+                title="Clique para copiar"
+            >
                 <div class="flex items-center gap-3 text-rose-400">
                     <i data-lucide="alert-octagon" class="w-8 h-8"></i>
-                    <span class="text-lg font-semibold uppercase tracking-wider">Limite Max</span>
+                    <div>
+                        <span class="text-sm font-semibold uppercase tracking-wider block opacity-75">Limite Max</span>
+                        <span class="text-[10px] text-rose-500/70 font-medium">Toque para copiar</span>
+                    </div>
                 </div>
-                <div id="limite" class="text-5xl font-black text-rose-400">--:--</div>
+                <div class="flex items-center gap-3">
+                    <div id="limite" class="text-5xl font-black text-rose-400">--:--</div>
+                    <i data-lucide="copy" class="w-5 h-5 text-rose-500/30 group-hover:text-rose-400 transition-colors"></i>
+                </div>
             </div>
         </div>
 
         <div class="flex-1"></div>
 
-        <!-- Botão Alarme transformado em Tag A para funcionar a Intent -->
-        <a 
-            id="btnAlarme" 
-            href="#"
-            class="w-full bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-slate-900 font-black text-xl py-6 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-sky-500/20 opacity-30 cursor-not-allowed pointer-events-none"
-        >
-            <i data-lucide="bell-ring" class="w-7 h-7"></i>
-            Ativar Alarme no Celular
-        </a>
+        <!-- Ações -->
+        <div class="flex flex-col gap-3">
+            <a 
+                id="btnAgenda" 
+                href="#"
+                target="_blank"
+                class="w-full bg-sky-500 hover:bg-sky-400 active:bg-sky-650 text-slate-900 font-black text-lg py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-sky-500/20 opacity-30 cursor-not-allowed pointer-events-none"
+            >
+                <i data-lucide="calendar-plus" class="w-6 h-6"></i>
+                Adicionar Lembrete na Agenda
+            </a>
+            
+            <button 
+                id="btnCopiar" 
+                class="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-850 border border-slate-700/60 text-slate-100 font-bold text-base py-4 rounded-2xl flex items-center justify-center gap-2 transition-all opacity-30 cursor-not-allowed pointer-events-none"
+            >
+                <i data-lucide="copy" class="w-5 h-5 text-slate-400"></i>
+                Copiar Saída Ideal
+            </button>
+        </div>
 
     </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 border border-sky-500/30 text-sky-400 px-6 py-3 rounded-full text-sm font-semibold shadow-2xl flex items-center gap-2 opacity-0 scale-95 pointer-events-none transition-all duration-300 z-50">
+        <i data-lucide="check" class="w-4 h-4"></i>
+        <span id="toastMsg">Copiado!</span>
+    </div>
 
     <script>
         lucide.createIcons();
@@ -99,7 +136,15 @@
         const inputEntrada = document.getElementById('entrada');
         const spanSaida = document.getElementById('saida');
         const spanLimite = document.getElementById('limite');
-        const btnAlarme = document.getElementById('btnAlarme');
+        const containerSaida = document.getElementById('containerSaida');
+        const containerLimite = document.getElementById('containerLimite');
+        const btnAgenda = document.getElementById('btnAgenda');
+        const btnCopiar = document.getElementById('btnCopiar');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+
+        let idealTimeStr = '';
+        let limitTimeStr = '';
 
         const salvo = localStorage.getItem('entrada');
         if (salvo) {
@@ -114,6 +159,37 @@
             }
         });
 
+        function showToast(message) {
+            toastMsg.innerText = message;
+            toast.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+            toast.classList.add('opacity-100', 'scale-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'scale-100');
+                toast.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+            }, 2500);
+        }
+
+        function copyToClipboard(text, label) {
+            if (!text || text === '--:--') return;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`${label} (${text}) copiado!`);
+            }).catch(err => {
+                console.error('Falha ao copiar: ', err);
+            });
+        }
+
+        containerSaida.addEventListener('click', () => {
+            if (idealTimeStr) copyToClipboard(idealTimeStr, 'Saída Ideal');
+        });
+
+        containerLimite.addEventListener('click', () => {
+            if (limitTimeStr) copyToClipboard(limitTimeStr, 'Limite Máximo');
+        });
+
+        btnCopiar.addEventListener('click', () => {
+            if (idealTimeStr) copyToClipboard(idealTimeStr, 'Saída Ideal');
+        });
+
         function calcularHorarios() {
             if (!inputEntrada.value) return;
 
@@ -125,17 +201,34 @@
             const dataLimite = new Date(dataSaida.getTime());
             dataLimite.setMinutes(dataLimite.getMinutes() + 42);
 
-            spanSaida.innerText = formatarHora(dataSaida);
-            spanLimite.innerText = formatarHora(dataLimite);
+            idealTimeStr = formatarHora(dataSaida);
+            limitTimeStr = formatarHora(dataLimite);
 
-            const hora = dataSaida.getHours();
-            const minuto = dataSaida.getMinutes();
+            spanSaida.innerText = idealTimeStr;
+            spanLimite.innerText = limitTimeStr;
 
-            // Atualiza a URL do botão com a Intent do Android
-            btnAlarme.href = `intent://#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${hora};i.android.intent.extra.alarm.MINUTES=${minuto};S.android.intent.extra.alarm.MESSAGE=Fim%20do%20Expediente;end`;
-            
-            // Habilita o botão
-            btnAlarme.classList.remove('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
+            // Gerar URL do Google Calendar para Lembrete com Notificação
+            const agora = new Date();
+            const yyyy = agora.getFullYear();
+            const mm = String(agora.getMonth() + 1).padStart(2, '0');
+            const dd = String(agora.getDate()).padStart(2, '0');
+
+            const formatarDataAgenda = (data) => {
+                const horaStr = String(data.getHours()).padStart(2, '0');
+                const minStr = String(data.getMinutes()).padStart(2, '0');
+                return `${yyyy}${mm}${dd}T${horaStr}${minStr}00`;
+            };
+
+            const dataInicioStr = formatarDataAgenda(dataSaida);
+            // Evento dura 5 minutos
+            const dataFim = new Date(dataSaida.getTime() + 5 * 60 * 1000);
+            const dataFimStr = formatarDataAgenda(dataFim);
+
+            btnAgenda.href = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Fim+do+Expediente+%F0%9F%9A%AA&dates=${dataInicioStr}/${dataFimStr}&details=Hor%C3%A1rio+de+sa%C3%ADda+ideal+calculado+pelo+PontoFlex.+Entrada+registrada+%C3%A0s+${inputEntrada.value}.&sf=true&output=xml`;
+
+            // Habilita os botões
+            btnAgenda.classList.remove('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
+            btnCopiar.classList.remove('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
         }
 
         function formatarHora(date) {
