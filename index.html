@@ -1,55 +1,185 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ponto Flex</title>
-    <link rel="manifest" href='data:application/json,{"name":"Ponto Flex","short_name":"Ponto","start_url":"/","display":"standalone","background_color":"#ffffff"}'>
+    <meta name="theme-color" content="#4f46e5">
+    
+    <!-- PWA Manifest embutido para permitir instalação -->
+    <link rel="manifest" href='data:application/json,{"name":"Ponto Flex","short_name":"Ponto","start_url":".","display":"standalone","background_color":"#f3f4f6","theme_color":"#4f46e5","icons":[{"src":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNGY0NmU1IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiPjwvY2lyY2xlPjxwb2x5bGluZSBwb2ludHM9IjEyIDYgMTIgMTIgMTYgMTQiPjwvcG9seWxpbmU+PC9zdmc+","sizes":"192x192","type":"image/svg+xml"}]}'>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
-        body { font-family: sans-serif; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        input { font-size: 1.5rem; padding: 10px; width: 100%; box-sizing: border-box; }
-        .result { font-size: 1.2rem; font-weight: bold; margin-top: 10px; }
+        /* Estilo base para input de tempo focar no mobile */
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            background: transparent;
+            bottom: 0;
+            color: transparent;
+            cursor: pointer;
+            height: auto;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: auto;
+        }
     </style>
 </head>
-<body>
-    <label>Horário de Entrada:</label>
-    <input type="time" id="entrada">
-    
-    <div class="result">Saída: <span id="saida">-</span></div>
-    <div class="result">Limite: <span id="limite">-</span></div>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 antialiased text-gray-800">
+
+    <main class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden">
+        
+        <!-- Header -->
+        <div class="bg-indigo-600 p-6 text-white text-center relative">
+            <i data-lucide="clock" class="w-12 h-12 mx-auto mb-2 opacity-90"></i>
+            <h1 class="text-2xl font-bold tracking-tight">Ponto Flex</h1>
+            <p class="text-indigo-200 text-sm mt-1">Gerencie seu horário de saída</p>
+            
+            <!-- Botão de Instalação PWA -->
+            <button id="btnInstalar" class="hidden absolute top-4 right-4 bg-indigo-500 hover:bg-indigo-400 p-2 rounded-full shadow-sm transition-colors" aria-label="Instalar App">
+                 <i data-lucide="download" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+            
+            <!-- Input Card -->
+            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 relative shadow-sm">
+                <label class="block text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+                    <i data-lucide="log-in" class="w-4 h-4 text-indigo-500"></i> Horário de Entrada
+                </label>
+                <div class="relative">
+                    <input 
+                        type="time" 
+                        id="entrada" 
+                        class="w-full bg-white text-3xl font-bold text-center text-gray-800 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all shadow-sm appearance-none relative z-10 cursor-pointer"
+                    >
+                </div>
+            </div>
+
+            <!-- Resultados -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-green-50 rounded-2xl p-4 border border-green-100 shadow-sm text-center">
+                    <div class="flex items-center justify-center gap-1 text-green-700 text-xs font-bold uppercase mb-1">
+                        <i data-lucide="log-out" class="w-3 h-3"></i> Saída Ideal
+                    </div>
+                    <div id="saida" class="text-2xl font-black text-green-600">--:--</div>
+                </div>
+                
+                <div class="bg-red-50 rounded-2xl p-4 border border-red-100 shadow-sm text-center">
+                    <div class="flex items-center justify-center gap-1 text-red-700 text-xs font-bold uppercase mb-1">
+                        <i data-lucide="alert-circle" class="w-3 h-3"></i> Limite
+                    </div>
+                    <div id="limite" class="text-2xl font-black text-red-600">--:--</div>
+                </div>
+            </div>
+
+            <!-- Botão de Alarme Nativo -->
+            <button 
+                id="btnAlarme" 
+                onclick="configurarAlarmeNativo()"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled
+            >
+                <i data-lucide="bell-ring" class="w-5 h-5"></i>
+                Criar Alarme no Celular
+            </button>
+
+        </div>
+    </main>
 
     <script>
-        const input = document.getElementById('entrada');
-        
-        // Carrega salvo
-        input.value = localStorage.getItem('entrada') || "";
-        calcular();
+        // Inicializa ícones
+        lucide.createIcons();
 
-        // Calcula ao mudar
-        input.addEventListener('change', () => {
-            localStorage.setItem('entrada', input.value);
-            calcular();
-            Notification.requestPermission();
+        const inputEntrada = document.getElementById('entrada');
+        const spanSaida = document.getElementById('saida');
+        const spanLimite = document.getElementById('limite');
+        const btnAlarme = document.getElementById('btnAlarme');
+        const btnInstalar = document.getElementById('btnInstalar');
+
+        // Constantes de jornada
+        const HORAS_JORNADA = 9; 
+        const HORAS_LIMITE = 10;
+
+        let horaSaidaMilitar = null;
+        let minutoSaidaMilitar = null;
+        let deferredPrompt;
+
+        // Lógica de Instalação PWA
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            btnInstalar.classList.remove('hidden');
         });
 
-        function calcular() {
-            if(!input.value) return;
-            const [h, m] = input.value.split(':').map(Number);
-            
-            const saida = new Date(); saida.setHours(h + 9, m); // 9h de jornada
-            const limite = new Date(); limite.setHours(h + 10, m); // 10h limite
-            
-            document.getElementById('saida').innerText = saida.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            document.getElementById('limite').innerText = limite.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            
-            // Agenda alerta
-            const agora = new Date();
-            const tempoAteSaida = saida.getTime() - agora.getTime();
-            if(tempoAteSaida > 0) {
-                setTimeout(() => {
-                    new Notification("Hora de vazar!", { body: "Sua jornada de trabalho terminou." });
-                }, tempoAteSaida);
+        btnInstalar.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    btnInstalar.classList.add('hidden');
+                }
+                deferredPrompt = null;
             }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            btnInstalar.classList.add('hidden');
+        });
+
+        // Carrega dados salvos
+        const salvo = localStorage.getItem('entrada');
+        if (salvo) {
+            inputEntrada.value = salvo;
+            calcularHorarios();
+        }
+
+        // Listener de mudança
+        inputEntrada.addEventListener('input', () => {
+            if (inputEntrada.value) {
+                localStorage.setItem('entrada', inputEntrada.value);
+                calcularHorarios();
+            }
+        });
+
+        function calcularHorarios() {
+            if (!inputEntrada.value) return;
+
+            const [h, m] = inputEntrada.value.split(':').map(Number);
+            
+            const dataSaida = new Date();
+            dataSaida.setHours(h + HORAS_JORNADA, m);
+            
+            const dataLimite = new Date();
+            dataLimite.setHours(h + HORAS_LIMITE, m);
+
+            // Formata para exibição
+            spanSaida.innerText = formatarHora(dataSaida);
+            spanLimite.innerText = formatarHora(dataLimite);
+
+            // Salva variáveis globais para o alarme nativo
+            horaSaidaMilitar = dataSaida.getHours();
+            minutoSaidaMilitar = dataSaida.getMinutes();
+
+            // Habilita botão
+            btnAlarme.disabled = false;
+        }
+
+        function formatarHora(date) {
+            return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function configurarAlarmeNativo() {
+            if (horaSaidaMilitar === null || minutoSaidaMilitar === null) return;
+            const intentUrl = `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${horaSaidaMilitar};i.android.intent.extra.alarm.MINUTES=${minutoSaidaMilitar};S.android.intent.extra.alarm.MESSAGE=Fim%20do%20Expediente;end`;
+            window.location.href = intentUrl;
         }
     </script>
 </body>
